@@ -12,9 +12,10 @@ public class CharacterMovement : MonoBehaviour
 
     private InputAction move;
 
-    private float speed;
+    [SerializeField] private float speed;
     private float minSpeed = 5f;
-    private float maxSpeed = 15f;
+    private float maxSpeed = 20f;
+    private float averageSpeed;
     private bool isStoped = true;
 
     [SerializeField] private float jumpHeight;
@@ -40,6 +41,22 @@ public class CharacterMovement : MonoBehaviour
 
     #region MonoBehavior
 
+    private void Start()
+    {
+        cam = Camera.main.transform;
+        controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
+
+        speed = minSpeed;
+        averageSpeed = (maxSpeed + minSpeed) / 2f;
+        Debug.Log(averageSpeed);
+
+        Vector3 a = new Vector3(1f, 2f, 3f);
+        Vector3 b = new Vector3(1f, 2f, 3f);
+
+        Debug.Log(a + b);
+    }
+
     private void Awake()
     {
         controls = new CharacterControls();
@@ -56,20 +73,6 @@ public class CharacterMovement : MonoBehaviour
     {
         controls.Character.Jump.started -= Jump;
         controls.Character.Disable();
-    }
-
-    private void Start()
-    {
-        cam = Camera.main.transform;
-        controller = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
-
-        speed = minSpeed;
-
-        Vector3 a = new Vector3(1f, 2f, 3f);
-        Vector3 b = new Vector3(1f, 2f, 3f);
-
-        Debug.Log(a + b);
     }
 
     private void Update()
@@ -179,6 +182,10 @@ public class CharacterMovement : MonoBehaviour
 
             speed -= 2f * Time.deltaTime;
         }
+
+        if (!IsGrounded())
+            speed -= 1.5f * Time.deltaTime;
+
     }
 
     private void AnimatorController()
@@ -188,17 +195,21 @@ public class CharacterMovement : MonoBehaviour
             animator.SetFloat("horizontal", moveValue.x);
             animator.SetFloat("vertical", moveValue.y);
         }
-        
+
         if (!isStoped)
             animator.SetBool("walking", true);
         else
             animator.SetBool("walking", false);
 
-        if (speed > 10f)
+        if (speed > averageSpeed)
+        {
             animator.SetBool("running", true);
+            float mma = maxSpeed - averageSpeed;
+            float runSpeed = (mma - (maxSpeed - speed))/ mma;
+            animator.SetFloat("speed", runSpeed + 1f);
+        }
         else
             animator.SetBool("running", false);
-        
         
         if (IsGrounded() && animator.GetBool("jump"))
             animator.SetBool("jump", false);
