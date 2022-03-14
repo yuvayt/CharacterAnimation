@@ -183,10 +183,13 @@ public class CharacterMovement : MonoBehaviour
 
     private void AnimatorController()
     {
-        animator.SetFloat("horizontal", moveValue.x);
-        animator.SetFloat("vertical", moveValue.y);
-
         if (moveValue != Vector2.zero)
+        {
+            animator.SetFloat("horizontal", moveValue.x);
+            animator.SetFloat("vertical", moveValue.y);
+        }
+        
+        if (!isStoped)
             animator.SetBool("walking", true);
         else
             animator.SetBool("walking", false);
