@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
 
         obstacle.transform.localScale = new Vector3(xScale, yScale, zScale);
 
-        pos.y += yScale;
+        pos.y += yScale/2f;
 
         Instantiate(obstacle, pos, Quaternion.identity);
     }
