@@ -49,7 +49,7 @@ public class CharacterMovement : MonoBehaviour
     private bool jump = false;
     private bool fallingForward = false;
     private bool fallingBackward = false;
-    private bool standUp;
+
 
 
     #endregion
@@ -238,15 +238,18 @@ public class CharacterMovement : MonoBehaviour
             {
                 fallingForward = false;
                 animator.SetBool(ffHash, false);
-
             }
             else if (fallingBackward)
             {
                 fallingBackward = false;
                 animator.SetBool(fbHash, false);
             }
-
         }
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        FallingAnimation(hit);
 
     }
 
@@ -259,10 +262,10 @@ public class CharacterMovement : MonoBehaviour
         if (!moving)
             return;
 
-        if (hit.gameObject.layer == 7 )
+        if (hit.gameObject.layer == 7)
         {
             speed -= 1f * Time.deltaTime;
-            
+
             if (speed <= (averageSpeed + minSpeed) / 2f)
                 return;
 
@@ -281,6 +284,18 @@ public class CharacterMovement : MonoBehaviour
                     fallingForward = true;
                 else if (vert < 0)
                     fallingBackward = true;
+                else if (horiz > 0)
+                {
+                    fallingForward = true;
+                    TurnRight();
+                }
+
+                else if (horiz < 0)
+                {
+                    fallingForward = true;
+                    TurnLeft();
+                }
+
                 else
                     return;
 
@@ -291,6 +306,18 @@ public class CharacterMovement : MonoBehaviour
                     fallingBackward = true;
                 else if (vert < 0)
                     fallingForward = true;
+                else if (horiz > 0)
+                {
+                    fallingBackward = true;
+                    TurnRight();
+                    
+                }
+                else if (horiz < 0)
+                {
+                    fallingBackward = true;
+                    TurnLeft();
+                    
+                }
                 else
                     return;
             }
@@ -301,18 +328,25 @@ public class CharacterMovement : MonoBehaviour
                 animator.SetBool(ffHash, true);
             else if (fallingBackward)
                 animator.SetBool(fbHash, true);
-        } 
-
+        }
 
     }
 
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+
+    private void TurnLeft()
     {
-        FallingAnimation(hit);
-        
+        Quaternion targetRotation = Quaternion.Euler(0f, -90f, 0f);
+
+        transform.rotation = targetRotation;
     }
 
-    
+    private void TurnRight()
+    {
+        Quaternion targetRotation = Quaternion.Euler(0f, 90f, 0f);
+
+        transform.rotation = targetRotation;
+    }
+
 
     #endregion
 }
