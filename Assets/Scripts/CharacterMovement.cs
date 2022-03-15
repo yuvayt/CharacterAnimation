@@ -109,8 +109,8 @@ public class CharacterMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!fallingBackward && !fallingForward)
-            Move();
+
+        Move();
         Gravity();
         AnimatorController();
     }
@@ -122,9 +122,7 @@ public class CharacterMovement : MonoBehaviour
 
     private void InputsHandler()
     {
-
         moveValue = move.ReadValue<Vector2>();
-
     }
 
     private void Move()
@@ -150,7 +148,6 @@ public class CharacterMovement : MonoBehaviour
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravityValue);
             jump = true;
         }
-
     }
 
     private void Gravity()
@@ -262,17 +259,23 @@ public class CharacterMovement : MonoBehaviour
         if (!moving)
             return;
 
-        if (hit.gameObject.layer == 7)
+        if (hit.gameObject.layer == 7 )
         {
-            float vert = animator.GetFloat(vertHash);
+            speed -= 1f * Time.deltaTime;
+            
+            if (speed <= (averageSpeed + minSpeed) / 2f)
+                return;
 
-            float characterSize = controller.bounds.size.magnitude;
-            float obstacleSize = hit.collider.bounds.size.magnitude;
+            float vert = animator.GetFloat(vertHash);
+            float horiz = animator.GetFloat(horizHash);
+
+            Vector3 characterSize = controller.bounds.size;
+            Vector3 obstacleSize = hit.collider.bounds.size;
 
             Debug.Log(characterSize);
             Debug.Log(obstacleSize);
 
-            if (obstacleSize <= characterSize / 3f)
+            if (obstacleSize.y <= characterSize.y / 4f)
             {
                 if (vert > 0)
                     fallingForward = true;
@@ -292,14 +295,13 @@ public class CharacterMovement : MonoBehaviour
                     return;
             }
 
-            speed = 4f;
+            speed = 0f;
 
             if (fallingForward)
                 animator.SetBool(ffHash, true);
             else if (fallingBackward)
                 animator.SetBool(fbHash, true);
-        }
-
+        } 
 
 
     }
@@ -307,7 +309,10 @@ public class CharacterMovement : MonoBehaviour
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         FallingAnimation(hit);
+        
     }
+
+    
 
     #endregion
 }
