@@ -28,10 +28,7 @@ public class GameManager : MonoBehaviour
         if (spawnable)
         {
             RandomSpawn();
-        } else
-        {
-            //Debug.Log(numCubes);
-        }
+        } 
 
     }
     #endregion
@@ -43,7 +40,6 @@ public class GameManager : MonoBehaviour
     {
 
         Vector3 rp = RandomPosition();
-        //Debug.Log(rp);
         if (rp != Vector3.zero)
         {
             SpawnCube(rp);
@@ -59,9 +55,9 @@ public class GameManager : MonoBehaviour
 
     private void SpawnCube(Vector3 pos)
     {
-        float xScale = Random.value * 2f + 1f;
-        float yScale = Random.value * 2f + 1f;
-        float zScale = Random.value * 2f + 1f;
+        float xScale = Random.value * 2.5f + .5f;
+        float yScale = Random.value * 2.5f + .5f;
+        float zScale = Random.value * 2.5f + .5f;
 
         obstacle.transform.localScale = new Vector3(xScale, yScale, zScale);
 
