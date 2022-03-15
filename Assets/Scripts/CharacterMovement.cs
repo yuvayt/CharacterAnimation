@@ -8,15 +8,14 @@ public class CharacterMovement : MonoBehaviour
     #region Variables
 
     private CharacterController controller;
-    private CharacterControls controls;
 
+    private CharacterControls controls;
     private InputAction move;
 
     [SerializeField] private float speed;
     private float minSpeed = 5f;
     private float maxSpeed = 20f;
     private float averageSpeed;
-    private bool isStoped = true;
 
     [SerializeField] private float jumpHeight;
     [SerializeField] private float gravityValue = -9.81f;
@@ -29,11 +28,28 @@ public class CharacterMovement : MonoBehaviour
 
     private Vector3 moveValue3;
     private Vector3 moveDirection;
-    //private Vector3 currentDirection;
     private Vector2 moveValue;
     private Vector3 velocity;
 
     private Animator animator;
+
+    private int horizHash;
+    private int vertHash;
+    private int movingHash;
+    private int runningHash;
+    private int jumpHash;
+    private int ffHash;
+    private int fbHash;
+    private int speedHash;
+
+
+    private bool idle = true;
+    private bool moving = false;
+    private bool running = false;
+    private bool jump = false;
+    private bool fallingForward = false;
+    private bool fallingBackward = false;
+    private bool standUp;
 
 
     #endregion
@@ -47,14 +63,18 @@ public class CharacterMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
+        horizHash = Animator.StringToHash("horizontal");
+        vertHash = Animator.StringToHash("vertical");
+        movingHash = Animator.StringToHash("moving");
+        runningHash = Animator.StringToHash("running");
+        jumpHash = Animator.StringToHash("jump");
+        ffHash = Animator.StringToHash("fallingForward");
+        fbHash = Animator.StringToHash("fallingBackward");
+        speedHash = Animator.StringToHash("speed");
+
         speed = minSpeed;
         averageSpeed = (maxSpeed + minSpeed) / 2f;
-        Debug.Log(averageSpeed);
 
-        Vector3 a = new Vector3(1f, 2f, 3f);
-        Vector3 b = new Vector3(1f, 2f, 3f);
-
-        Debug.Log(a + b);
     }
 
     private void Awake()
@@ -78,14 +98,19 @@ public class CharacterMovement : MonoBehaviour
     private void Update()
     {
         InputsHandler();
-        Look();
+
+        if (!fallingForward && !fallingBackward)
+        {
+            Look();
+        }
+
         SpeedController();
-        
     }
 
     private void FixedUpdate()
     {
-        Move();
+        if (!fallingBackward && !fallingForward)
+            Move();
         Gravity();
         AnimatorController();
     }
@@ -104,6 +129,7 @@ public class CharacterMovement : MonoBehaviour
 
     private void Move()
     {
+
         if (moveValue != Vector2.zero)
         {
             moveValue3 = new Vector3(moveValue.x, 0f, moveValue.y);
@@ -111,7 +137,7 @@ public class CharacterMovement : MonoBehaviour
 
         moveDirection = cam.forward * moveValue3.z + cam.right * moveValue3.x;
         moveDirection.y = 0f;
-        
+
         controller.Move(moveDirection * speed * Time.deltaTime);
 
 
@@ -119,10 +145,10 @@ public class CharacterMovement : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext obj)
     {
-        if (IsGrounded())
+        if (IsGrounded() && !fallingBackward && !fallingForward)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravityValue);
-            animator.SetBool("jump", true);
+            jump = true;
         }
 
     }
@@ -134,7 +160,8 @@ public class CharacterMovement : MonoBehaviour
 
         if (IsGrounded() && velocity.y < 0f)
         {
-            velocity.y = -2f;
+            jump = false;
+            velocity.y = -1f;
         }
 
         controller.Move(velocity * Time.deltaTime);
@@ -159,31 +186,29 @@ public class CharacterMovement : MonoBehaviour
     private void SpeedController()
     {
 
-        //Debug.Log(speed);
-
         if (moveValue != Vector2.zero)
         {
-            isStoped = false;
+            idle = false;
             if (speed < maxSpeed)
                 speed += 1f * Time.deltaTime;
         }
         else
         {
-            if (isStoped)
+            if (idle)
                 return;
 
             if (speed < minSpeed)
             {
                 speed = minSpeed;
                 moveValue3 = Vector3.zero;
-                isStoped = true;
+                idle = true;
                 return;
             }
 
             speed -= 2f * Time.deltaTime;
         }
 
-        if (!IsGrounded())
+        if (jump)
             speed -= 1.5f * Time.deltaTime;
 
     }
@@ -192,37 +217,97 @@ public class CharacterMovement : MonoBehaviour
     {
         if (moveValue != Vector2.zero)
         {
-            animator.SetFloat("horizontal", moveValue.x);
-            animator.SetFloat("vertical", moveValue.y);
+            animator.SetFloat(horizHash, moveValue.x);
+            animator.SetFloat(vertHash, moveValue.y);
         }
 
-        if (!isStoped)
-            animator.SetBool("walking", true);
-        else
-            animator.SetBool("walking", false);
+        moving = (moveDirection != Vector3.zero);
+        animator.SetBool(movingHash, moving);
 
-        if (speed > averageSpeed)
+        running = speed > averageSpeed;
+        animator.SetBool(runningHash, running);
+        if (running)
         {
-            animator.SetBool("running", true);
             float mma = maxSpeed - averageSpeed;
-            float runSpeed = (mma - (maxSpeed - speed))/ mma;
-            animator.SetFloat("speed", runSpeed + 1f);
+            float runSpeed = (mma - (maxSpeed - speed)) / mma;
+            animator.SetFloat(speedHash, runSpeed + 1f);
         }
-        else
-            animator.SetBool("running", false);
-        
-        if (IsGrounded() && animator.GetBool("jump"))
-            animator.SetBool("jump", false);
+
+        animator.SetBool(jumpHash, jump);
+
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName("StandUp"))
+        {
+            if (fallingForward)
+            {
+                fallingForward = false;
+                animator.SetBool(ffHash, false);
+
+            }
+            else if (fallingBackward)
+            {
+                fallingBackward = false;
+                animator.SetBool(fbHash, false);
+            }
+
+        }
+
     }
 
-    //private void OnDrawGizmos()
-    //{
-    //    Vector3 spherePos = new Vector3(transform.position.x, transform.position.y - offset, transform.position.z);
-    //    Gizmos.color = Color.red;
-    //    Gizmos.DrawSphere(spherePos, controller.radius - 0.05f);
-    //}
+    private void FallingAnimation(ControllerColliderHit hit)
+    {
+
+        if (fallingBackward || fallingForward)
+            return;
+
+        if (!moving)
+            return;
+
+        if (hit.gameObject.layer == 7)
+        {
+            float vert = animator.GetFloat(vertHash);
+
+            float characterSize = controller.bounds.size.magnitude;
+            float obstacleSize = hit.collider.bounds.size.magnitude;
+
+            Debug.Log(characterSize);
+            Debug.Log(obstacleSize);
+
+            if (obstacleSize <= characterSize / 3f)
+            {
+                if (vert > 0)
+                    fallingForward = true;
+                else if (vert < 0)
+                    fallingBackward = true;
+                else
+                    return;
+
+            }
+            else
+            {
+                if (vert > 0)
+                    fallingBackward = true;
+                else if (vert < 0)
+                    fallingForward = true;
+                else
+                    return;
+            }
+
+            speed = 4f;
+
+            if (fallingForward)
+                animator.SetBool(ffHash, true);
+            else if (fallingBackward)
+                animator.SetBool(fbHash, true);
+        }
 
 
+
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        FallingAnimation(hit);
+    }
 
     #endregion
 }
