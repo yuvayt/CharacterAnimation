@@ -1,5 +1,6 @@
 # Character_Animation
- 
+Simple character animations using Unity
+
 ## Day 1
 - Hoàn thành tạo nhân vật từ 6 hình khối
 - Hoàn thành 10 Animation cho nhân vật bao gồm cả các Animation con như Move_forward, Move_backward, Move_left, Move_right, Falling_forward, Falling_backward.
